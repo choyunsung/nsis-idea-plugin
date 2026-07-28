@@ -1,0 +1,84 @@
+<idea-plugin>
+    <id>kr.amcg.nsis</id>
+    <name>NSIS Support</name>
+    <vendor email="dev@amcg.kr">AMCG</vendor>
+
+    <description><![CDATA[
+        <p>NSIS(Nullsoft Scriptable Install System) 설치 스크립트 지원.</p>
+        <ul>
+            <li><b>문법 강조</b> — 명령어 · 전처리기 · <code>$변수</code> · <code>${정의}</code> · 문자열 · 주석</li>
+            <li><b>구조 뷰 · 코드 접기</b> — Section / SectionGroup / Function / !macro / PageEx</li>
+            <li><b>자동 완성</b> — NSIS 명령, <code>!</code> 지시자, 내장 상수, MUI2 define/매크로, LogicLib,
+                그리고 현재 파일의 <code>!define</code> · <code>Var</code> · <code>Function</code></li>
+            <li><b>검사</b> — 닫히지 않은 블록, 존재하지 않는 <code>File</code>/<code>!include</code> 대상,
+                <code>Unicode true</code> 없이 쓴 비ASCII 문자, BOM 없는 유니코드 스크립트, 오타 난 <code>!</code> 지시자</li>
+            <li><b>문서 팝업</b> — 자주 쓰는 명령의 문법과 설명</li>
+            <li><b>makensis 로 컴파일</b> — 에디터 우클릭 메뉴에서 바로 빌드</li>
+        </ul>
+        <p>플랫폼 모듈만 사용하므로 IntelliJ IDEA · PyCharm · WebStorm · CLion 등 모든 JetBrains IDE 에 설치됩니다.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="NSIS"
+            language="NSIS"
+            extensions="nsi;nsh"
+            implementationClass="kr.amcg.nsis.NsisFileType"
+            fieldName="INSTANCE"/>
+
+        <lang.parserDefinition
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisSyntaxHighlighterFactory"/>
+
+        <lang.commenter
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisCommenter"/>
+
+        <lang.foldingBuilder
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisFoldingBuilder"/>
+
+        <lang.psiStructureViewFactory
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisStructureViewFactory"/>
+
+        <lang.documentationProvider
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisDocumentationProvider"/>
+
+        <annotator
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisAnnotator"/>
+
+        <completion.contributor
+            language="NSIS"
+            implementationClass="kr.amcg.nsis.NsisCompletionContributor"/>
+
+        <colorSettingsPage implementation="kr.amcg.nsis.NsisColorSettingsPage"/>
+
+        <applicationConfigurable
+            parentId="tools"
+            id="kr.amcg.nsis.settings"
+            displayName="NSIS"
+            instance="kr.amcg.nsis.NsisConfigurable"/>
+
+        <notificationGroup id="NSIS" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action
+            id="kr.amcg.nsis.CompileNsis"
+            class="kr.amcg.nsis.CompileNsisAction"
+            text="Compile with makensis"
+            description="현재 NSIS 스크립트를 makensis 로 컴파일합니다">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
