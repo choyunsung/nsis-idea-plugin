@@ -1,5 +1,6 @@
 package kr.amcg.nsis
 
+import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -7,6 +8,24 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
  * 실제 IDE 플랫폼을 띄워(헤드리스) 렉서·검사·자동완성·구조뷰가 붙는지 확인한다.
  */
 class NsisPluginTest : BasePlatformTestCase() {
+
+    private var savedMakensis: String = ""
+
+    override fun setUp() {
+        super.setUp()
+        // NSIS 를 못 찾은 상태로 고정한다. 개발 머신에 NSIS 가 깔렸는지에 따라 결과가
+        // 달라지면 안 되고, 테스트 VFS 는 임시 폴더 밖(/opt/homebrew 등) 접근을 막는다.
+        savedMakensis = NsisSettings.getInstance().makensisPath
+        NsisSettings.getInstance().makensisPath = "/존재하지-않는/makensis"
+    }
+
+    override fun tearDown() {
+        try {
+            NsisSettings.getInstance().makensisPath = savedMakensis
+        } finally {
+            super.tearDown()
+        }
+    }
 
     // ---------- 렉서 ----------
 
@@ -89,6 +108,70 @@ class NsisPluginTest : BasePlatformTestCase() {
     fun `test 없는 파일 참조를 경고한다`() {
         val w = warnings("a.nsi", "Section \"s\"\n  File \"없는파일.ttf\"\nSectionEnd\n")
         assertTrue("경고가 없다: $w", w.any { it.contains("대상이 없습니다") })
+    }
+
+    // ---------- 참조 (⌘+클릭) ----------
+
+    /** 참조 해석은 부모 폴더가 있어야 하므로 실제 프로젝트 파일로 만들어 연다. */
+    private fun openInProject(name: String, text: String): PsiFile {
+        val psi = myFixture.addFileToProject(name, text)
+        myFixture.configureFromExistingVirtualFile(psi.virtualFile)
+        return myFixture.file
+    }
+
+    /** ⌘+클릭이 데려가는 곳. 없으면 null. */
+    private fun gotoTargetAt(file: PsiFile, needle: String): String? {
+        val offset = file.text.indexOf(needle)
+        assertTrue("본문에 '$needle' 이 없다", offset >= 0)
+        val element = file.findElementAt(offset)
+        val targets = NsisGotoDeclarationHandler()
+            .getGotoDeclarationTargets(element, offset, myFixture.editor)
+        return (targets?.firstOrNull() as? PsiFile)?.name
+    }
+
+    fun `test 프로젝트 안 include 는 그 파일로 이어진다`() {
+        myFixture.addFileToProject("헬퍼.nsh", "; helper\n")
+        val file = openInProject("a.nsi", "!include \"헬퍼.nsh\"\n")
+        assertEquals("헬퍼.nsh", gotoTargetAt(file, "헬퍼"))
+    }
+
+    fun `test File 인자도 그 파일로 이어진다`() {
+        myFixture.addFileToProject("logo.ico", "")
+        val file = openInProject("a.nsi", "Section\n  File \"logo.ico\"\nSectionEnd\n")
+        assertEquals("logo.ico", gotoTargetAt(file, "logo"))
+    }
+
+    fun `test 없는 대상은 이동할 곳이 없다`() {
+        val file = openInProject("a.nsi", "!include \"sub/없는헤더.nsh\"\n")
+        assertNull("없는 파일인데 이동 대상이 잡혔다", gotoTargetAt(file, "sub"))
+    }
+
+    fun `test 경로 인자가 아닌 곳에서는 이동하지 않는다`() {
+        val file = openInProject("a.nsi", "Name \"내 프로그램\"\n")
+        assertNull("경로가 아닌데 이동 대상이 잡혔다", gotoTargetAt(file, "내"))
+    }
+
+    // ---------- 문서 ----------
+
+    fun `test 명령 위에서 문서 팝업이 뜬다`() {
+        val file = myFixture.configureByText("a.nsi", "Sleep 1000\n")
+        val element = file.findElementAt(0)
+        val doc = NsisDocumentationProvider().generateDoc(element, element)
+        assertNotNull("문서가 없다", doc)
+        assertTrue("문법이 안 보인다: $doc", doc!!.contains("Sleep milliseconds"))
+        assertTrue("설명이 안 보인다: $doc", doc.contains("밀리초"))
+    }
+
+    fun `test 모든 명령에 설명이 붙어 있다`() {
+        val documented = NsisKeywords.DOCS.keys
+        val missing = NsisKeywords.ALL_COMMANDS.map { it.lowercase() }
+            .filter { it !in documented }
+        assertTrue("설명 없는 명령: $missing", missing.isEmpty())
+    }
+
+    fun `test 전처리기 지시자에도 설명이 붙어 있다`() {
+        val missing = NsisKeywords.PREPROCESSOR_DIRECTIVES.filter { it !in NsisKeywords.DOCS }
+        assertTrue("설명 없는 지시자: $missing", missing.isEmpty())
     }
 
     fun `test 표준 헤더 include 는 경고하지 않는다`() {

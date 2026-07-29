@@ -13,16 +13,29 @@ NSIS(Nullsoft Scriptable Install System) 설치 스크립트(`.nsi`, `.nsh`)를 
 | 구조 뷰 | `Section` · `SectionGroup` · `Function` · `!macro` · `PageEx` 목록과 이름 |
 | 코드 접기 | 위 블록 단위로 접기 |
 | 자동 완성 | NSIS 명령 약 200개, `!` 지시자, `$` 내장 상수, MUI2 define·매크로, LogicLib `${If}` 계열, 그리고 **현재 파일의** `!define` · `Var` · `Function` · `!macro` |
-| 문서 팝업 | 자주 쓰는 명령의 문법 한 줄 + 설명 (⌘Q / Ctrl+Q) |
+| 문서 팝업 | **모든 명령·지시자**(234개)의 문법 한 줄 + 설명 (⌘Q / Ctrl+Q) |
+| 파일로 이동 | `!include "MUI2.nsh"` · `File "logo.ico"` 등 경로 인자에서 ⌘/Ctrl+클릭 |
 | 검사 | 아래 참조 |
 | 빌드 | 에디터 우클릭 → **Compile with makensis** |
+
+### `!include` 해석
+
+`!include` 는 NSIS 와 같은 순서로 찾는다 — **스크립트 폴더 → `!addincludedir` 로 더한 폴더 →
+NSIS 설치본의 `Include` 폴더**. 마지막 폴더 덕분에 `MUI2.nsh` · `LogicLib.nsh` 같은 표준 헤더도
+⌘+클릭으로 열린다.
+
+NSIS 설치본은 `NSISDIR` 환경 변수 → `makensis` 위치에서 찾는다
+(윈도 `<NSIS>\Include`, Homebrew 등 유닉스 `<prefix>/share/nsis/Include`).
 
 ### 검사(Inspection) 항목
 
 - **닫히지 않은 블록** — `Section` ↔ `SectionEnd`, `Function` ↔ `FunctionEnd`, `!macro` ↔ `!macroend` 등.
   `!ifdef` 류 조건부 컴파일이 있는 파일은 정적으로 짝을 맞출 수 없어 이 검사를 자동으로 끈다(오탐 방지).
-- **없는 파일 참조** — `File`, `!include`, `Icon`, `LicenseData`, `!define MUI_ICON` 등이 가리키는 경로가
+- **없는 파일 참조** — `File`, `Icon`, `LicenseData`, `!define MUI_ICON` 등이 가리키는 경로가
   실제로 없으면 경고. 윈도 역슬래시 경로를 현재 OS 경로로 바꿔서 확인한다.
+  `!include` 는 위 검색 경로 전체를 뒤진 뒤에 판단하며, **NSIS 설치본을 못 찾았고 폴더 없이 이름만 쓴**
+  헤더(`MUI2.nsh`)는 표준 헤더인지 오타인지 가릴 근거가 없으므로 경고하지 않는다.
+  `!include /nonfatal` 은 "없어도 괜찮다"는 선언이므로 검사에서 뺀다.
 - **유니코드 준비 상태** — 비ASCII 문자가 있는데 `Unicode true` 가 없으면 경고.
   추가로 **BOM 이 없으면** 약한 경고 — NSIS 유니코드 빌드는 소스를 UTF-8 BOM(또는 UTF-16LE)으로 읽어야
   라이선스·마법사 문구가 깨지지 않는다.

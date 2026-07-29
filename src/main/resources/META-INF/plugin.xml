@@ -56,6 +56,9 @@
             language="NSIS"
             implementationClass="kr.amcg.nsis.NsisAnnotator"/>
 
+        <gotoDeclarationHandler
+            implementation="kr.amcg.nsis.NsisGotoDeclarationHandler"/>
+
         <completion.contributor
             language="NSIS"
             implementationClass="kr.amcg.nsis.NsisCompletionContributor"/>
