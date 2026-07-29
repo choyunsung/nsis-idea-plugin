@@ -3,3 +3,5 @@ build/
 out/
 .idea/
 *.iml
+# IntelliJ Platform 플러그인이 내려받는 IDE 의존성 캐시
+.intellijPlatform/

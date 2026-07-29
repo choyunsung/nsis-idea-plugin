@@ -28,9 +28,12 @@ NSIS(Nullsoft Scriptable Install System) 설치 스크립트(`.nsi`, `.nsh`)를 
   라이선스·마법사 문구가 깨지지 않는다.
 - **오타 난 전처리기 지시자** — `!inclde` 같은 알 수 없는 `!` 지시자.
 
-## 빌드
+## 요구 사항
 
-JDK 21 과 Gradle 이 필요하다. macOS 에 JDK 가 따로 없다면 JetBrains IDE 에 들어 있는 JBR 을 쓰면 된다:
+- **IDE 2026.2 (build 262) 이상** — `since-build=262`, until-build 없음(상위 버전 자동 허용)
+- 빌드에는 JDK 와 Gradle. macOS 에 JDK 가 따로 없다면 JetBrains IDE 에 들어 있는 JBR 을 쓰면 된다.
+
+## 빌드
 
 ```bash
 export JAVA_HOME="/Applications/PyCharm.app/Contents/jbr/Contents/Home"   # 또는 WebStorm.app
@@ -40,6 +43,14 @@ gradle buildPlugin
 산출물: `build/distributions/nsis-idea-plugin-1.0.0.zip`
 
 처음 빌드할 때 Gradle 이 IntelliJ Platform SDK(약 1~2GB)를 내려받는다.
+
+검증 완료 조합: **Gradle 9.6.1 · JBR 25 · IntelliJ Platform 2026.2 ·
+Kotlin 2.4.10 · IntelliJ Platform Gradle Plugin 2.18.1** — 컴파일 경고 0,
+`verifyPluginProjectConfiguration` 지적 사항 0.
+
+> Java/Kotlin 타깃은 일부러 지정하지 않는다. IntelliJ Platform 플러그인이 대상 플랫폼에 맞는
+> 값을 `afterEvaluate` 에서 설정하므로 빌드 스크립트에서 못박아도 덮어써진다.
+> `sinceBuild` 를 대상 플랫폼과 맞춰 두는 쪽이 맞다.
 
 ### 설치
 

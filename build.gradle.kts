@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.4.10"
@@ -25,23 +23,18 @@ dependencies {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
-    }
-}
+// Java/Kotlin 타깃은 일부러 지정하지 않는다.
+// IntelliJ Platform 플러그인이 대상 플랫폼(2026.2)에 맞는 값을 afterEvaluate 에서 설정하며,
+// 여기서 21 로 못박아도 덮어써진다(verifyPluginProjectConfiguration 이 25 로 보고).
+// sinceBuild 를 대상 플랫폼과 맞춰 두면 바이트코드 호환 경고도 함께 사라진다.
 
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            // 2024.3 이상이면 설치된다. 상한을 넓게 둬 IDE 를 올려도 막히지 않게 한다.
-            sinceBuild = "243"
-            untilBuild = "299.*"
+            // 대상 플랫폼과 동일하게. 낮추면 그보다 낮은 IDE 에는 없는 API 를 쓸 위험이 생긴다.
+            sinceBuild = "262"
+            // until-build 는 두지 않는다 — 두면 IDE 를 올리는 순간 설치가 막힌다.
+            untilBuild = provider { null }
         }
     }
     // 설정 검색 인덱스는 빌드마다 IDE 를 띄워서 느리다 — 로컬 설치본에는 불필요
