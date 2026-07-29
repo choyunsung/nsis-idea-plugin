@@ -55,7 +55,7 @@ intellijPlatform {
 }
 
 tasks.runIde {
-    // gradle runIde -PideProject=/경로  로 특정 폴더를 연 채 샌드박스 IDE 를 띄운다.
+    // ./gradlew runIde -PideProject=/경로  로 특정 폴더를 연 채 샌드박스 IDE 를 띄운다.
     (project.findProperty("ideProject") as String?)?.let { args(it) }
     // 샌드박스에서 신뢰 확인 대화상자를 건너뛴다 (테스트용 프로젝트를 바로 열기 위함)
     jvmArgumentProviders.add(

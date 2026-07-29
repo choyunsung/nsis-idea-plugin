@@ -31,14 +31,18 @@ NSIS(Nullsoft Scriptable Install System) 설치 스크립트(`.nsi`, `.nsh`)를 
 ## 요구 사항
 
 - **IDE 2026.2 (build 262) 이상** — `since-build=262`, until-build 없음(상위 버전 자동 허용)
-- 빌드에는 JDK 와 Gradle. macOS 에 JDK 가 따로 없다면 JetBrains IDE 에 들어 있는 JBR 을 쓰면 된다.
+- 빌드에는 JDK 만 있으면 된다(Gradle 은 wrapper 가 알아서 받는다).
+  macOS 에 JDK 가 따로 없다면 JetBrains IDE 에 들어 있는 JBR 을 쓰면 된다.
 
 ## 빌드
 
 ```bash
 export JAVA_HOME="/Applications/PyCharm.app/Contents/jbr/Contents/Home"   # 또는 WebStorm.app
-gradle buildPlugin
+./gradlew buildPlugin
 ```
+
+Gradle wrapper 를 커밋해 두었으므로 Gradle 을 따로 설치할 필요는 없다 —
+`./gradlew` 가 `gradle/wrapper/gradle-wrapper.properties` 에 적힌 배포본(9.6.1)을 처음 한 번 내려받는다.
 
 산출물: `build/distributions/nsis-idea-plugin-1.0.0.zip`
 
@@ -59,7 +63,7 @@ IDE → **Settings → Plugins → ⚙︎ → Install Plugin from Disk…** 에�
 ### IDE 에서 바로 띄워 보기
 
 ```bash
-gradle runIde
+./gradlew runIde
 ```
 
 ## 설정
