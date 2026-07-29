@@ -47,7 +47,7 @@ class NsisSyntaxHighlighter : SyntaxHighlighterBase() {
             NsisTokenTypes.BAD_CHARACTER -> NsisColors.BAD_CHARACTER
             else -> null
         }
-        return if (key == null) TextAttributesKey.EMPTY_ARRAY else arrayOf(key)
+        return if (key == null) emptyArray() else arrayOf(key)
     }
 }
 

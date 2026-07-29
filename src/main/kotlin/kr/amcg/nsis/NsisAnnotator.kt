@@ -71,7 +71,7 @@ class NsisAnnotator : Annotator {
         }
 
         // 4) 알 수 없는 !전처리기 지시자 (오타 잡기)
-        annotateUnknownDirectives(text, holder, ::range)
+        annotateUnknownDirectives(text, holder) { s, e -> range(s, e) }
     }
 
     private fun annotateUnknownDirectives(

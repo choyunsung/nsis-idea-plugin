@@ -18,9 +18,10 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        // IC = IntelliJ IDEA Community. 플러그인은 platform 모듈만 쓰므로
+        // IntelliJ IDEA 를 컴파일 기준 플랫폼으로 쓴다. 실제 의존은 platform 모듈뿐이라
         // PyCharm·WebStorm·CLion 등 모든 JetBrains IDE 에 설치된다.
-        create("IC", "2026.2")
+        // (IC 별도 배포는 2025.3(253) 부터 중단돼 intellijIdea() 를 쓴다)
+        intellijIdea("2026.2")
     }
 }
 

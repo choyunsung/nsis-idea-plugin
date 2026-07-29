@@ -66,7 +66,7 @@ class NsisSettings : PersistentStateComponent<NsisSettings.State> {
     }
 
     companion object {
-        fun getInstance(): NsisSettings = service()
+        fun getInstance(): NsisSettings = service<NsisSettings>()
     }
 }
 
