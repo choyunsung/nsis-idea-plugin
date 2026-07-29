@@ -250,11 +250,17 @@ object NsisOutline {
             // 마지막 인자를 경로로 본다 (/r, /nonfatal, /oname=… 같은 스위치는 건너뜀)
             var arg = nextArg(code, afterFirst)
             var last: Arg? = null
+            var nonfatal = false
             while (arg != null) {
-                if (!arg.value.startsWith("/")) last = arg
+                if (arg.value.startsWith("/")) {
+                    // /nonfatal 은 "없어도 괜찮다" 는 선언이므로 아예 검사 대상에서 뺀다
+                    if (arg.value.equals("/nonfatal", ignoreCase = true)) nonfatal = true
+                } else {
+                    last = arg
+                }
                 arg = nextArg(code, arg.end)
             }
-            last?.let { addPathRef(pathRefs, it, lineOffset, first.value) }
+            if (!nonfatal) last?.let { addPathRef(pathRefs, it, lineOffset, first.value) }
         }
     }
 

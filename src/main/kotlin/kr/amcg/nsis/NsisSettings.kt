@@ -55,6 +55,27 @@ class NsisSettings : PersistentStateComponent<NsisSettings.State> {
         return findOnPath()
     }
 
+    /**
+     * NSIS 표준 헤더(`MUI2.nsh` · `LogicLib.nsh` · `WinMessages.nsh` …)가 들어 있는 `Include` 폴더.
+     *
+     * `NSISDIR` 환경 변수를 먼저 보고, 없으면 makensis 위치에서 유도한다.
+     * - 윈도 표준 설치: `<NSIS>\makensis.exe` → `<NSIS>\Include`
+     * - Homebrew 등 유닉스: `<prefix>/bin/makensis` → `<prefix>/share/nsis/Include`
+     *
+     * NSIS 가 설치돼 있지 않으면 null — 이 경우 검사 쪽에서 표준 헤더를 경고하지 않는다.
+     */
+    fun resolveIncludeDir(): File? {
+        System.getenv("NSISDIR")?.trim()?.takeIf { it.isNotEmpty() }?.let { d ->
+            File(d, "Include").takeIf { it.isDirectory }?.let { return it }
+        }
+        val binDir = resolveMakensis()?.let { File(it).absoluteFile.parentFile } ?: return null
+        val candidates = buildList {
+            add(File(binDir, "Include"))
+            binDir.parentFile?.let { add(File(it, "share${File.separatorChar}nsis${File.separatorChar}Include")) }
+        }
+        return candidates.firstOrNull { it.isDirectory }
+    }
+
     private fun findOnPath(): String? {
         val exe = if (SystemInfo.isWindows) "makensis.exe" else "makensis"
         val path = System.getenv("PATH") ?: return null

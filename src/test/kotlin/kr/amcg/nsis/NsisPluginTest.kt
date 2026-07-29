@@ -91,6 +91,22 @@ class NsisPluginTest : BasePlatformTestCase() {
         assertTrue("경고가 없다: $w", w.any { it.contains("대상이 없습니다") })
     }
 
+    fun `test 표준 헤더 include 는 경고하지 않는다`() {
+        // MUI2.nsh 등은 NSIS 설치본의 Include 폴더에 있다. 스크립트 폴더에 없다고 경고하면 오탐.
+        val w = warnings("a.nsi", "!include \"MUI2.nsh\"\n!include \"WinMessages.nsh\"\n!include \"LogicLib.nsh\"\n")
+        assertTrue("오탐이 났다: $w", w.none { it.contains("include") })
+    }
+
+    fun `test 경로가 붙은 include 는 없으면 경고한다`() {
+        val w = warnings("a.nsi", "!include \"sub/없는헤더.nsh\"\n")
+        assertTrue("경고가 없다: $w", w.any { it.contains("찾지 못했습니다") })
+    }
+
+    fun `test nonfatal include 는 없어도 경고하지 않는다`() {
+        val w = warnings("a.nsi", "!include /nonfatal \"sub/없는헤더.nsh\"\n")
+        assertTrue("오탐이 났다: $w", w.none { it.contains("찾지 못했습니다") })
+    }
+
     fun `test Unicode true 없는 비ASCII 를 경고한다`() {
         val w = warnings("a.nsi", "Name \"한글 이름\"\n")
         assertTrue("경고가 없다: $w", w.any { it.contains("Unicode true") })

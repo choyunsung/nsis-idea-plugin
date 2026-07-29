@@ -57,9 +57,21 @@ class NsisAnnotator : Annotator {
         // 3) 없는 파일을 가리키는 경로 인자
         val baseDir = element.virtualFile?.parent?.path
         if (baseDir != null) {
+            val includeDir = NsisSettings.getInstance().resolveIncludeDir()
+            val searchPath = includeSearchPath(baseDir, analysis.pathRefs, includeDir)
             for (ref in analysis.pathRefs) {
                 val r = range(ref.startOffset, ref.endOffset) ?: continue
                 val normalized = ref.path.replace('\\', File.separatorChar).replace('/', File.separatorChar)
+                if (ref.directive.equals("!include", ignoreCase = true)) {
+                    // !include 는 스크립트 폴더가 아니라 검색 경로 전체에서 찾는다
+                    if (missingInclude(normalized, searchPath, includeDir != null)) {
+                        holder.newAnnotation(
+                            HighlightSeverity.WARNING,
+                            "!include 대상을 검색 경로에서 찾지 못했습니다: $normalized",
+                        ).range(r).create()
+                    }
+                    continue
+                }
                 val candidate = File(normalized).let { if (it.isAbsolute) it else File(baseDir, normalized) }
                 if (!candidate.exists()) {
                     holder.newAnnotation(
@@ -72,6 +84,37 @@ class NsisAnnotator : Annotator {
 
         // 4) 알 수 없는 !전처리기 지시자 (오타 잡기)
         annotateUnknownDirectives(text, holder) { s, e -> range(s, e) }
+    }
+
+    /**
+     * `!include` 가 실제로 뒤지는 폴더들 — 스크립트 폴더, 스크립트가 `!addincludedir` 로
+     * 추가한 폴더, 그리고 NSIS 설치본의 `Include` 폴더 순.
+     */
+    private fun includeSearchPath(baseDir: String, refs: List<NsisPathRef>, includeDir: File?): List<File> {
+        val dirs = ArrayList<File>()
+        dirs += File(baseDir)
+        for (r in refs) {
+            if (!r.directive.equals("!addincludedir", ignoreCase = true)) continue
+            val n = r.path.replace('\\', File.separatorChar).replace('/', File.separatorChar)
+            dirs += File(n).let { if (it.isAbsolute) it else File(baseDir, n) }
+        }
+        includeDir?.let { dirs += it }
+        return dirs
+    }
+
+    /**
+     * 검색 경로 어디에도 없을 때만 참으로 본다.
+     *
+     * NSIS 설치를 못 찾은 상태에서 `MUI2.nsh` 처럼 폴더 없이 이름만 쓴 헤더는
+     * 표준 헤더인지 오타인지 가릴 방법이 없으므로 경고하지 않는다 —
+     * 없는 근거가 없는데 경고부터 띄우면 정상 스크립트가 온통 노란 줄이 된다.
+     * 반면 `sub/foo.nsh` 처럼 경로가 붙은 참조는 프로젝트 안을 가리키는 것이므로 그대로 확인한다.
+     */
+    private fun missingInclude(path: String, searchPath: List<File>, includeDirKnown: Boolean): Boolean {
+        val f = File(path)
+        if (f.isAbsolute) return !f.exists()
+        if (searchPath.any { File(it, path).exists() }) return false
+        return if (path.contains(File.separatorChar)) true else includeDirKnown
     }
 
     private fun annotateUnknownDirectives(
