@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.4.10"
@@ -20,6 +22,17 @@ dependencies {
         // PyCharm·WebStorm·CLion 등 모든 JetBrains IDE 에 설치된다.
         // (IC 별도 배포는 2025.3(253) 부터 중단돼 intellijIdea() 를 쓴다)
         intellijIdea("2026.2")
+        testFramework(TestFrameworkType.Platform)
+    }
+    testImplementation("junit:junit:4.13.2")
+}
+
+tasks.test {
+    // BasePlatformTestCase 는 JUnit3 스타일이라 헤드리스로 돌린다
+    systemProperty("java.awt.headless", "true")
+    testLogging {
+        events("passed", "failed", "skipped")
+        showStandardStreams = false
     }
 }
 
@@ -39,4 +52,18 @@ intellijPlatform {
     }
     // 설정 검색 인덱스는 빌드마다 IDE 를 띄워서 느리다 — 로컬 설치본에는 불필요
     buildSearchableOptions = false
+}
+
+tasks.runIde {
+    // gradle runIde -PideProject=/경로  로 특정 폴더를 연 채 샌드박스 IDE 를 띄운다.
+    (project.findProperty("ideProject") as String?)?.let { args(it) }
+    // 샌드박스에서 신뢰 확인 대화상자를 건너뛴다 (테스트용 프로젝트를 바로 열기 위함)
+    jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf(
+                "-Didea.trust.all.projects=true",
+                "-Dide.show.tips.on.startup.default.value=false",
+            )
+        },
+    )
 }

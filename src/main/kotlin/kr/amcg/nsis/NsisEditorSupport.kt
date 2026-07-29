@@ -28,8 +28,8 @@ class NsisFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
         for (r in analysis.regions) {
             if (r.startOffset < 0 || r.endOffset > textLength || r.endOffset <= r.startOffset) continue
-            // 한 줄짜리는 접을 이유가 없다
-            if (document.getLineNumber(r.endOffset) <= document.getLineNumber(r.startOffset)) continue
+            // 본문이 없는 블록(Section 바로 다음 줄이 SectionEnd)은 접어봐야 얻는 게 없다
+            if (document.getLineNumber(r.endOffset) - document.getLineNumber(r.startOffset) < 2) continue
             val node = root.node.findLeafElementAt(r.startOffset) ?: continue
             val label = if (r.name.isBlank()) r.kind.display else "${r.kind.display} ${r.name}"
             out += FoldingDescriptor(node, TextRange(r.startOffset, r.endOffset), null, "$label …")
